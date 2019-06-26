@@ -35,7 +35,7 @@ namespace RockWeb.Plugins.org_secc.Tutorials
     /// Template block for developers to use to start a new block.
     /// </summary>
     [DisplayName( "Hello World Data Fetch" )]
-    [Category( "OrganizationName > SECC" )]
+    [Category( "SECC > Tutorials" )]
     [Description( "Hello World Fetching Data" )]
     [EmailField("Email")]
     [CustomRadioListField( "Gender Filter", "Select in order to list only records for that gender",
@@ -81,8 +81,14 @@ namespace RockWeb.Plugins.org_secc.Tutorials
 
             if ( !Page.IsPostBack )
             {
-                var items = new PersonService( new RockContext() ).Queryable().Where(P=>P.Email=="sschulte@secc.org").ToList();
-                gPeople.DataSource = items;
+                var genderValue = GetAttributeValue( "GenderFilter" );
+                var query = new PersonService( new RockContext() ).Queryable();
+                if ( !string.IsNullOrEmpty( genderValue ) )
+                {
+                    Gender gender = genderValue.ConvertToEnum<Gender>();
+                    query = query.Where( p => p.Gender == gender );
+                }
+                gPeople.DataSource = query.ToList();
                 gPeople.DataBind();
             }
         }
