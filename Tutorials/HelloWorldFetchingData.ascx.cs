@@ -37,9 +37,8 @@ namespace RockWeb.Plugins.org_secc.Tutorials
     [DisplayName( "Hello World Data Fetch" )]
     [Category( "SECC > Tutorials" )]
     [Description( "Hello World Fetching Data" )]
-    [EmailField("Email")]
-    [CustomRadioListField( "Gender Filter", "Select in order to list only records for that gender",
-     "1^Male,2^Female", required: false )]
+    [EmailField( "Email" )]
+    [LinkedPage( "Related Page" )]
     public partial class HelloWorldFetchingData : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -81,12 +80,14 @@ namespace RockWeb.Plugins.org_secc.Tutorials
 
             if ( !Page.IsPostBack )
             {
-                var genderValue = GetAttributeValue( "GenderFilter" );
+                var emailValue = GetAttributeValue( "Email" );
                 var query = new PersonService( new RockContext() ).Queryable();
-                if ( !string.IsNullOrEmpty( genderValue ) )
+                if ( !string.IsNullOrEmpty( emailValue ) )
                 {
-                    Gender gender = genderValue.ConvertToEnum<Gender>();
-                    query = query.Where( p => p.Gender == gender );
+                    query = query.Where( p => p.Email == emailValue );
+                } else
+                {
+                    query = query.Take(10);
                 }
                 gPeople.DataSource = query.ToList();
                 gPeople.DataBind();
@@ -107,6 +108,11 @@ namespace RockWeb.Plugins.org_secc.Tutorials
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
 
+        }
+
+        protected void gPeople_RowSelected( object sender, RowEventArgs e )
+        {
+            NavigateToLinkedPage( "RelatedPage", "PersonId", ( int ) e.RowKeyValues["Id"] );
         }
 
         #endregion
