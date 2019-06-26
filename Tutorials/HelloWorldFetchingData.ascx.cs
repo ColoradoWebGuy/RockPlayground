@@ -28,6 +28,7 @@ using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 using Rock.Attribute;
+using Rock.Security;
 
 namespace RockWeb.Plugins.org_secc.Tutorials
 {
@@ -37,7 +38,7 @@ namespace RockWeb.Plugins.org_secc.Tutorials
     [DisplayName( "Hello World Data Fetch" )]
     [Category( "SECC > Tutorials" )]
     [Description( "Hello World Fetching Data" )]
-    [EmailField( "Email" )]
+    [EmailField( "Email", required: false )]
     [LinkedPage( "Related Page" )]
     public partial class HelloWorldFetchingData : Rock.Web.UI.RockBlock
     {
@@ -65,6 +66,12 @@ namespace RockWeb.Plugins.org_secc.Tutorials
         {
             base.OnInit( e );
 
+            if ( IsUserAuthorized( Authorization.EDIT ) )
+            {
+                gPeople.Actions.ShowAdd = true;
+                gPeople.Actions.AddClick += gPeople_Add;
+            }
+
             // this event gets fired after block settings are updated. it's nice to repaint the screen if these settings would alter it
             this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger( upnlContent );
@@ -80,18 +87,24 @@ namespace RockWeb.Plugins.org_secc.Tutorials
 
             if ( !Page.IsPostBack )
             {
-                var emailValue = GetAttributeValue( "Email" );
-                var query = new PersonService( new RockContext() ).Queryable();
-                if ( !string.IsNullOrEmpty( emailValue ) )
-                {
-                    query = query.Where( p => p.Email == emailValue );
-                } else
-                {
-                    query = query.Take(10);
-                }
-                gPeople.DataSource = query.ToList();
-                gPeople.DataBind();
+                BindGrid();
             }
+        }
+
+        protected void BindGrid()
+        {
+            var emailValue = GetAttributeValue( "Email" );
+            var query = new PersonService( new RockContext() ).Queryable();
+            if ( !string.IsNullOrEmpty( emailValue ) )
+            {
+                query = query.Where( p => p.Email == emailValue );
+            }
+            else
+            {
+                query = query.Take( 10 );
+            }
+            gPeople.DataSource = query.ToList();
+            gPeople.DataBind();
         }
 
         #endregion
@@ -107,12 +120,21 @@ namespace RockWeb.Plugins.org_secc.Tutorials
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void Block_BlockUpdated( object sender, EventArgs e )
         {
-
+            BindGrid();
         }
 
         protected void gPeople_RowSelected( object sender, RowEventArgs e )
         {
             NavigateToLinkedPage( "RelatedPage", "PersonId", ( int ) e.RowKeyValues["Id"] );
+        }
+
+        protected void gPeople_Add( object sender, EventArgs e )
+        {
+            Response.Redirect( "~/NewFamily/" );
+
+            // prevents .NET from quietly throwing ThreadAbortException
+            Context.ApplicationInstance.CompleteRequest();
+            return;
         }
 
         #endregion
