@@ -38,6 +38,8 @@ namespace RockWeb.Plugins.org_secc.Tutorials
     [Category( "OrganizationName > SECC" )]
     [Description( "Hello World Fetching Data" )]
     [EmailField("Email")]
+    [CustomRadioListField( "Gender Filter", "Select in order to list only records for that gender",
+     "1^Male,2^Female", required: false )]
     public partial class HelloWorldFetchingData : Rock.Web.UI.RockBlock
     {
         #region Fields
@@ -79,7 +81,7 @@ namespace RockWeb.Plugins.org_secc.Tutorials
 
             if ( !Page.IsPostBack )
             {
-                var items = new PersonService( new RockContext() ).Queryable().ToList();
+                var items = new PersonService( new RockContext() ).Queryable().Where(P=>P.Email=="sschulte@secc.org").ToList();
                 gPeople.DataSource = items;
                 gPeople.DataBind();
             }
